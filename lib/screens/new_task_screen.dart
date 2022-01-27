@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todo/models/todo.dart';
@@ -28,7 +29,7 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
   String themeTag = "white";
 
   DateTime? date = null;
-  TimeOfDay? time = TimeOfDay.now();
+  TimeOfDay? time = null;
 
   TextEditingController dateController = TextEditingController();
   TextEditingController timeController = TextEditingController();
@@ -55,6 +56,43 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
     }
     return dropdownMenuItems;
   }
+
+  void openDatePicker() async {
+    print("opened the calender");
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: date == null ? DateTime.now() : date!,
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2101),
+    );
+    if (pickedDate != null) {
+      date = pickedDate;
+      setState(() {});
+      var dateString = DateFormat('EEEE, d MMM, yyyy').format(pickedDate);
+      dateController.text = dateString;
+    }
+  }
+
+  void openTimePicker() async {
+    print("opened the clock");
+    TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: time == null ? TimeOfDay.now() : time!,
+    );
+    if (pickedTime != null) {
+      time = pickedTime;
+      setState(() {});
+      var timeString = pickedTime.format(context);
+      timeController.text = timeString;
+    }
+  }
+
+  final repeatSpan = [
+    "Days",
+    "Weeks",
+    "Months",
+    "Years",
+  ];
 
   @override
   void initState() {
@@ -91,6 +129,7 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
           ),
           onPressed: () {
             print("ToDo saved");
+            Navigator.pop(context, true);
           }),
       appBar: AppBar(
         title: Text(
@@ -102,7 +141,7 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
         ),
       ),
       body: Container(
-        padding: EdgeInsets.fromLTRB(10, 10, 0, 0),
+        padding: EdgeInsets.fromLTRB(10, 20, 0, 0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -148,6 +187,7 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
               children: [
                 Flexible(
                   child: TextField(
+                    onTap: openDatePicker,
                     readOnly: true,
                     controller: dateController,
                     decoration: InputDecoration(
@@ -160,22 +200,7 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
                 ),
                 CustomIconButton(
                   iconData: Icons.calendar_today_sharp,
-                  onPressed: () async {
-                    print("opened the calender");
-                    DateTime? pickedDate = await showDatePicker(
-                      context: context,
-                      initialDate: date == null ? DateTime.now() : date!,
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime(2101),
-                    );
-                    if (pickedDate != null) {
-                      date = pickedDate;
-                      setState(() {});
-                      var dateString =
-                          DateFormat('EEEE, d MMM, yyyy').format(pickedDate);
-                      dateController.text = dateString;
-                    }
-                  },
+                  onPressed: openDatePicker,
                 ),
                 Visibility(
                   visible: date == null ? false : true,
@@ -200,6 +225,7 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
                 children: [
                   Flexible(
                     child: TextField(
+                      onTap: openTimePicker,
                       readOnly: true,
                       controller: timeController,
                       decoration: InputDecoration(
@@ -212,19 +238,7 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
                   ),
                   CustomIconButton(
                     iconData: Icons.watch_later_outlined,
-                    onPressed: () async {
-                      print("opened the clock");
-                      TimeOfDay? pickedTime = await showTimePicker(
-                        context: context,
-                        initialTime: time == null ? TimeOfDay.now() : time!,
-                      );
-                      if (pickedTime != null) {
-                        time = pickedTime;
-                        setState(() {});
-                        var timeString = pickedTime.format(context);
-                        timeController.text = timeString;
-                      }
-                    },
+                    onPressed: openTimePicker,
                   ),
                   Visibility(
                     visible: time == null ? false : true,
@@ -262,7 +276,9 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
                       ),
                       actions: [
                         TextButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
                           child: Text("Cancel"),
                         ),
                         TextButton(
@@ -270,13 +286,83 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
                           child: Text("Set"),
                         )
                       ],
-                      content: Text("Content"),
+                      content: CupertinoPicker(
+                        magnification: 1.2,
+                        children: repeatSpan
+                            .map((item) => Center(
+                                  child: Text(item),
+                                ))
+                            .toList(),
+                        onSelectedItemChanged: (index) {
+                          print(index);
+                        },
+                        itemExtent: 60.0,
+                      ),
+                      elevation: 100.0,
                     );
                     showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return alert;
-                        });
+                      context: context,
+                      builder: (BuildContext context) {
+                        return alert;
+                      },
+                      // barrierDismissible: false,
+                    );
+                  }
+                }
+              },
+            ),
+            SizedBox(
+              height: 50,
+            ),
+            Text("Add to List"),
+            DropdownButton<String>(
+              items: dropdownItemCreator(dropdownOptions),
+              value: selectedFrequency,
+              onChanged: (String? chosenValue) {
+                // print(chosenValue);
+                if (chosenValue != null) {
+                  if (chosenValue != dropdownOptions.last) {
+                    selectedFrequency = chosenValue;
+                    setState(() {});
+                  } else {
+                    AlertDialog alert = AlertDialog(
+                      title: Text(
+                        "Create new list",
+                        style: TextStyle(fontSize: 17),
+                      ),
+                      actions: [
+                        TextButton(
+                          child: Text("Cancel"),
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                        ),
+                        TextButton(
+                          child: Text("Create"),
+                          onPressed: () {},
+                        )
+                      ],
+                      // content: CupertinoPicker(
+                      //   magnification: 1.2,
+                      //   children: repeatSpan
+                      //       .map((item) => Center(
+                      //     child: Text(item),
+                      //   ))
+                      //       .toList(),
+                      //   onSelectedItemChanged: (index) {
+                      //     print(index);
+                      //   },
+                      //   itemExtent: 60.0,
+                      // ),
+                      elevation: 100.0,
+                    );
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return alert;
+                      },
+                      // barrierDismissible: false,
+                    );
                   }
                 }
               },
