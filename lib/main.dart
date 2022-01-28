@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
@@ -44,6 +45,9 @@ class MyHomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
+          backgroundColor: CupertinoColors.systemBlue,
+          elevation: 1.0,
+          hoverElevation: 10.0,
           child: Icon(
             Icons.add,
             size: 50,
@@ -54,7 +58,7 @@ class MyHomePage extends StatelessWidget {
             Navigator.pushNamed(context, newTaskScreenId);
           }),
       appBar: AppBar(
-        backgroundColor: Colors.teal,
+        backgroundColor: Colors.blue,
         title: Text("ToDo"),
       ),
       body: Container(
@@ -169,7 +173,7 @@ class ActivityCard extends StatelessWidget {
                   child: Checkbox(
                     value: false,
                     onChanged: (value) {
-                      print("working");
+                      print("task finished");
                     },
                     autofocus: true,
                   ),

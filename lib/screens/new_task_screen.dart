@@ -39,6 +39,8 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
     "Once a Day",
     "Once a Day [Mon-Fri]",
     "Once a Week",
+    "Once a Month",
+    "Once a Year",
     "Other",
   ];
 
@@ -55,6 +57,22 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
       );
     }
     return dropdownMenuItems;
+  }
+
+  List<String> listOptions = ["Default"];
+  String defaultOption = "Default";
+
+  List<DropdownMenuItem<String>> dropdownListCreator(List<String> listValues) {
+    List<DropdownMenuItem<String>> dropdownLists = [];
+    for (var i = 0; i < listValues.length; i++) {
+      dropdownLists.add(
+        DropdownMenuItem<String>(
+          value: listValues[i],
+          child: Text(listValues[i]),
+        ),
+      );
+    }
+    return dropdownLists;
   }
 
   void openDatePicker() async {
@@ -94,6 +112,49 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
     "Years",
   ];
 
+  TextEditingController listController = TextEditingController();
+
+  void createDialog() {
+    AlertDialog alert = AlertDialog(
+      title: Text(
+        "Create new list",
+        style: TextStyle(fontSize: 17),
+      ),
+      content: Flexible(
+        child: TextField(
+          controller: listController,
+          decoration: InputDecoration(
+            hintText: "Enter Text Here",
+          ),
+          textAlignVertical: TextAlignVertical.bottom,
+          autofocus: false,
+        ),
+      ),
+      actions: [
+        TextButton(
+          child: Text("Cancel"),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        TextButton(
+          child: Text("Create"),
+          onPressed: () {
+            listOptions.add(listController.text);
+            Navigator.pop(context);
+            setState(() {});
+          },
+        ),
+      ],
+      elevation: 100.0,
+    );
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return alert;
+        });
+  }
+
   @override
   void initState() {
     saveToSharedPref();
@@ -123,6 +184,7 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
+          backgroundColor: CupertinoColors.systemBlue,
           child: Icon(
             Icons.check,
             size: 30,
@@ -315,57 +377,32 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
               height: 50,
             ),
             Text("Add to List"),
-            DropdownButton<String>(
-              items: dropdownItemCreator(dropdownOptions),
-              value: selectedFrequency,
-              onChanged: (String? chosenValue) {
-                // print(chosenValue);
-                if (chosenValue != null) {
-                  if (chosenValue != dropdownOptions.last) {
-                    selectedFrequency = chosenValue;
-                    setState(() {});
-                  } else {
-                    AlertDialog alert = AlertDialog(
-                      title: Text(
-                        "Create new list",
-                        style: TextStyle(fontSize: 17),
-                      ),
-                      actions: [
-                        TextButton(
-                          child: Text("Cancel"),
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                        ),
-                        TextButton(
-                          child: Text("Create"),
-                          onPressed: () {},
-                        )
-                      ],
-                      // content: CupertinoPicker(
-                      //   magnification: 1.2,
-                      //   children: repeatSpan
-                      //       .map((item) => Center(
-                      //     child: Text(item),
-                      //   ))
-                      //       .toList(),
-                      //   onSelectedItemChanged: (index) {
-                      //     print(index);
-                      //   },
-                      //   itemExtent: 60.0,
-                      // ),
-                      elevation: 100.0,
-                    );
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return alert;
-                      },
-                      // barrierDismissible: false,
-                    );
-                  }
-                }
-              },
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                DropdownButton<String>(
+                  items: dropdownListCreator(listOptions),
+                  onChanged: (String? chosenValue) {
+                    // print(chosenValue);
+                    // listOptions.add(listController.text);
+                    if (chosenValue != null) {
+                      setState(() {});
+                      listController.text = "";
+                      defaultOption = chosenValue;
+                    }
+                    // if (chosenValue != listOptions[0]) {
+                    //   defaultOption = listOptions.last;
+                    // }
+                  },
+                  value: listOptions.last == defaultOption
+                      ? defaultOption
+                      : listController.text,
+                ),
+                CustomIconButton(
+                  iconData: Icons.create_new_folder_sharp,
+                  onPressed: createDialog,
+                ),
+              ],
             ),
           ],
         ),
@@ -387,9 +424,11 @@ class CustomIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextButton(
+      autofocus: true,
       onPressed: onPressed,
       child: Icon(iconData),
       style: TextButton.styleFrom(
+        primary: CupertinoColors.systemBlue,
         padding: const EdgeInsets.symmetric(horizontal: 9),
         tapTargetSize: MaterialTapTargetSize.padded,
         minimumSize: Size.zero,
