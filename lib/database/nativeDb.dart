@@ -10,7 +10,7 @@ class NativeDatabaseService {
   static final NativeDatabaseService db = NativeDatabaseService();
 
   Database? _database;
-  String? path;
+  // String? path;
 
   Future<Database> get database async {
     if (database != null) return _database!;

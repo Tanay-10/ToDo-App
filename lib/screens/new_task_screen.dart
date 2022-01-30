@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todo/models/todo.dart';
 import 'package:intl/intl.dart';
+import 'package:todo/screens/routing.dart';
+
+import '../database/sqlite.dart';
 
 class NewTaskScreen extends StatefulWidget {
   const NewTaskScreen({Key? key}) : super(key: key);
@@ -26,6 +29,12 @@ class NewTaskScreen extends StatefulWidget {
 }
 
 class _NewTaskScreenState extends State<NewTaskScreen> {
+  String? taskName = "";
+  String dateString = "";
+  DateTime? selectedDate;
+  TimeOfDay? selectedTime;
+  int? selectedTaskListId;
+
   String themeTag = "white";
 
   DateTime? date = null;
@@ -187,11 +196,24 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
           backgroundColor: CupertinoColors.systemBlue,
           child: Icon(
             Icons.check,
-            size: 30,
+            size: 40,
           ),
-          onPressed: () {
-            print("ToDo saved");
-            Navigator.pop(context, true);
+          onPressed: () async {
+            print("ToDo task saved");
+            // Map<String, dynamic> task = {
+            //   "taskListID": selectedTaskListId,
+            //   "parentTaskID": null,
+            //   "taskName": taskName,
+            //   "deadlineDate": selectedDate == null
+            //       ? null
+            //       : selectedDate!.millisecondsSinceEpoch,
+            //   // "deadlineTime":
+            //   //     selectedTime == null ? null : intFromTimeOfDay(selectedTime),
+            //   "isFinished": 0,
+            //   "isRepeated": 0
+            // };
+            // int? taskId = await SqliteDB.insertTask(task);
+            Navigator.pushNamed(context, homeScreenId);
           }),
       appBar: AppBar(
         title: Text(
@@ -219,8 +241,12 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
               children: [
                 Flexible(
                   child: TextField(
+                    onChanged: (String? value) {
+                      taskName = value ?? taskName;
+                    },
                     decoration: InputDecoration(
                       hintText: "Enter Text Here",
+                      isDense: true,
                     ),
                     textAlignVertical: TextAlignVertical.bottom,
                     autofocus: false,
@@ -378,29 +404,37 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
             ),
             Text("Add to List"),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              // mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                DropdownButton<String>(
-                  items: dropdownListCreator(listOptions),
-                  onChanged: (String? chosenValue) {
-                    // print(chosenValue);
-                    // listOptions.add(listController.text);
-                    if (chosenValue != null) {
-                      setState(() {});
-                      listController.text = "";
-                      defaultOption = chosenValue;
-                    }
-                    // if (chosenValue != listOptions[0]) {
-                    //   defaultOption = listOptions.last;
-                    // }
-                  },
-                  value: listOptions.last == defaultOption
-                      ? defaultOption
-                      : listController.text,
+                Flexible(
+                  flex: 1,
+                  fit: FlexFit.values[1],
+                  child: DropdownButton<String>(
+                    isExpanded: true,
+                    items: dropdownListCreator(listOptions),
+                    onChanged: (String? chosenValue) {
+                      // print(chosenValue);
+                      // listOptions.add(listController.text);
+                      if (chosenValue != null) {
+                        setState(() {});
+                        listController.text = "";
+                        defaultOption = chosenValue;
+                      }
+                      // if (chosenValue != listOptions[0]) {
+                      //   defaultOption = listOptions.last;
+                      // }
+                    },
+                    value: listOptions.last == defaultOption
+                        ? defaultOption
+                        : listController.text,
+                  ),
                 ),
-                CustomIconButton(
-                  iconData: Icons.create_new_folder_sharp,
-                  onPressed: createDialog,
+                Flexible(
+                  flex: 0,
+                  child: CustomIconButton(
+                    iconData: Icons.create_new_folder_sharp,
+                    onPressed: createDialog,
+                  ),
                 ),
               ],
             ),
@@ -409,6 +443,11 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
       ),
     );
   }
+
+  // intFromTimeOfDay(TimeOfDay? timeToConvert) {
+  //   int convertedTime = timeToConvert!.hour * 60 + timeToConvert!.minute;
+  //   return convertedTime;
+  // }
 }
 
 class CustomIconButton extends StatelessWidget {
