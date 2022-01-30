@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 enum RepeatCycle {
   // noRepeat,
   onceADay,
@@ -22,12 +24,12 @@ class RepeatFreq {
 }
 
 class Task {
-  static late int counter;
   Task({
+    required this.taskId,
     required this.taskListId,
     required this.taskName,
-    required this.finished,
-    taskId = null,
+    required this.isFinished,
+    required this.isRepeated,
     this.parentTaskId,
     this.deadlineDate,
     this.deadlineTime,
@@ -39,20 +41,22 @@ class Task {
       this.taskId = taskId;
     }
   }
+  static late int counter;
 
-  static initializeCounter(int counter) {
-    Task.counter = counter;
-  }
+  // static initializeCounter(int counter) {
+  //   Task.counter = counter;
+  // }
 
-  late int taskId;
+  int taskId;
   int taskListId;
   int? parentTaskId; // used for repeated task instances only
   String taskName;
   DateTime? deadlineDate;
-  DateTime? deadlineTime;
-  bool finished;
+  TimeOfDay? deadlineTime;
+  bool isFinished;
+  bool isRepeated;
   void finishedTask() {
-    finished = true;
+    isFinished = true;
   }
 }
 
@@ -92,7 +96,7 @@ class TaskList {
     List<Task> activeNonRepeatingTasks = [];
     {
       for (var i = 0; i < nonRepeatingTasks.length; i++) {
-        if (nonRepeatingTasks[i].finished == false) {
+        if (nonRepeatingTasks[i].isFinished == false) {
           activeNonRepeatingTasks.add(nonRepeatingTasks[i]);
         }
       }
@@ -107,12 +111,15 @@ class TaskList {
   void addTask({
     required String taskName,
     DateTime? deadlineDate,
-    DateTime? deadlineTime,
+    TimeOfDay? deadlineTime,
     int? parentTaskId,
   }) {
+    var taskId;
     Task(
+      taskId: taskId,
       taskName: taskName,
-      finished: false,
+      isFinished: false,
+      isRepeated: false,
       taskListId: taskListId,
       deadlineDate: deadlineDate,
       deadlineTime: deadlineTime,
