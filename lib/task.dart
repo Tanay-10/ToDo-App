@@ -1,21 +1,30 @@
 import 'package:flutter/material.dart';
 
+//used to display in UI
+const String noRepeat = "No Repeat";
+
 enum RepeatCycle {
-  // noRepeat,
   onceADay,
-  onceADayMonToFri,
+  onceADayMonFri,
   onceAWeek,
   onceAMonth,
   onceAYear,
   other,
 }
 
-enum Tenure {
-  days,
-  weeks,
-  months,
-  years,
+String repeatCycleToUIString(RepeatCycle r) {
+  Map<RepeatCycle, String> mapper = {
+    RepeatCycle.onceADay: "Once A Day",
+    RepeatCycle.onceADayMonFri: "Once A Day( Mon-Fri )",
+    RepeatCycle.onceAWeek: "Once A Week",
+    RepeatCycle.onceAMonth: "Once A Month",
+    RepeatCycle.onceAYear: "Once A Year",
+    RepeatCycle.other: "Other...",
+  };
+  return (mapper[r]!);
 }
+
+enum Tenure { days, weeks, months, years }
 
 class RepeatFreq {
   RepeatFreq({required this.num, required this.tenure});
@@ -25,107 +34,143 @@ class RepeatFreq {
 
 class Task {
   Task({
-    required this.taskId,
-    required this.taskListId,
     required this.taskName,
+    required this.taskListId,
+    required this.taskId,
     required this.isFinished,
-    required this.isRepeated,
+    required this.isRepeating,
     this.parentTaskId,
     this.deadlineDate,
     this.deadlineTime,
-  }) {
-    if (taskId == null) {
-      this.taskId = counter;
-      counter++;
-    } else {
-      this.taskId = taskId;
-    }
-  }
-  static late int counter;
-
-  // static initializeCounter(int counter) {
-  //   Task.counter = counter;
-  // }
+  });
 
   int taskId;
   int taskListId;
-  int? parentTaskId; // used for repeated task instances only
+  int? parentTaskId; //used for repeated task instances only
   String taskName;
   DateTime? deadlineDate;
   TimeOfDay? deadlineTime;
   bool isFinished;
-  bool isRepeated;
-  void finishedTask() {
+  bool isRepeating;
+  void finishTask() {
     isFinished = true;
+  }
+
+  Map<String, dynamic> toMap() {
+    Map<String, dynamic> taskAsMap = {
+      "taskID": taskId,
+      "taskListID": taskListId,
+      "parentTaskID": null,
+      "taskName": taskName,
+      "deadlineDate":
+          deadlineDate == null ? null : deadlineDate!.millisecondsSinceEpoch,
+      "deadlineTime":
+          deadlineTime == null ? null : intFromTimeOfDay(deadlineTime!),
+      "isFinished": 0,
+      "isRepeating": 0,
+    };
+    return (taskAsMap);
+  }
+
+  static Task fromMap(Map<String, dynamic> taskAsMap) {
+    Task task = Task(
+      taskId: taskAsMap["taskID"],
+      taskListId: taskAsMap["taskListID"],
+      parentTaskId: taskAsMap["parentTaskID"],
+      taskName: taskAsMap["taskName"],
+      deadlineDate: taskAsMap["deadlineDate"] == null
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(taskAsMap["deadlineDate"]),
+      deadlineTime: taskAsMap["deadlineTime"] == null
+          ? null
+          : timeOfDayFromInt(taskAsMap["deadlineTime"]),
+      isFinished: taskAsMap["isFinished"] == 0 ? false : true,
+      isRepeating: taskAsMap["isRepeating"] == 0 ? false : true,
+    );
+    return (task);
   }
 }
 
-class RepeatedTask {
-  RepeatedTask({
-    required this.repeatedTaskId,
+int intFromTimeOfDay(TimeOfDay tod) {
+  return (tod.minute + 60 * tod.hour);
+}
+
+TimeOfDay timeOfDayFromInt(int todInt) {
+  return TimeOfDay(hour: todInt ~/ 60, minute: todInt % 60);
+}
+
+class RepeatingTask {
+  RepeatingTask({
+    required this.repeatingTaskId,
     required this.repeatingTaskName,
-    required this.deadlineDate,
     required this.repeatCycle,
-    this.repeatFreq,
+    required this.deadlineDate,
+    this.repeatFrequency,
     this.deadlineTime,
+    required this.taskListID,
   });
-  int repeatedTaskId;
+  int taskListID;
+  int repeatingTaskId;
   String repeatingTaskName;
-  DateTime deadlineDate;
   RepeatCycle repeatCycle;
+  RepeatFreq? repeatFrequency;
+  DateTime deadlineDate;
   DateTime? deadlineTime;
-  RepeatFreq? repeatFreq;
 }
 
 class TaskList {
+  int taskListID;
+  String taskListName;
+  List<Task> nonRepeatingTasks;
+  List<RepeatingTask> repeatingTasks;
+  List<Task> activeRepeatingTaskInstances;
   TaskList({
-    required this.taskListId,
-    required this.taskListName,
     required this.nonRepeatingTasks,
     required this.repeatingTasks,
     required this.activeRepeatingTaskInstances,
+    required this.taskListID,
+    required this.taskListName,
   });
-  int taskListId;
-  String taskListName;
-  List<Task> nonRepeatingTasks;
-  List<RepeatedTask> repeatingTasks;
-  List<Task> activeRepeatingTaskInstances;
-
-  List<Task> getActiveTasks() {
-    //TODO :: Select repeating task instances as well
+/*List<Task> getActiveTasks() {
+    //TODO::Select repeating Task Instances as well
     List<Task> activeNonRepeatingTasks = [];
     {
       for (var i = 0; i < nonRepeatingTasks.length; i++) {
-        if (nonRepeatingTasks[i].isFinished == false) {
+        if (nonRepeatingTasks[i].finished == false) {
           activeNonRepeatingTasks.add(nonRepeatingTasks[i]);
         }
       }
       return (activeNonRepeatingTasks);
     }
+  }*/
+
+/*List<Task> getFinishedTasks() {
+    //repeating Instances as well as non-repeating Instances
+    return ([]);
   }
 
-  // List<Task> getFinishedTasks() {
-  //   // repeating instances as well as non-repeating instances
-  // }
+  void FinishTask(Task task) {}*/
 
-  void addTask({
+/*void addTask({
     required String taskName,
     DateTime? deadlineDate,
     TimeOfDay? deadlineTime,
-    int? parentTaskId,
+    int? parentTaskID,
   }) {
-    var taskId;
+    //
     Task(
-      taskId: taskId,
       taskName: taskName,
-      isFinished: false,
-      isRepeated: false,
-      taskListId: taskListId,
+      finished: false,
+      taskListID: taskListID,
       deadlineDate: deadlineDate,
       deadlineTime: deadlineTime,
-      parentTaskId: parentTaskId,
+      parentTaskID: parentTaskID,
     );
 
-    if (parentTaskId != null) {}
-  }
+    if (parentTaskID != null) {
+      //
+    }
+  }*/
+
+/*void finishTask(Task task) {}*/
 }
