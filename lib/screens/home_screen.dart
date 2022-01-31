@@ -105,14 +105,14 @@ class ActivityCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: (){
+      onTap: () {
         Navigator.pushNamed(context, routing.newTaskScreenId);
       },
       child: Column(
         children: [
           Card(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(7.0)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(7.0)),
             child: Container(
               width: double.maxFinite,
               padding: EdgeInsets.fromLTRB(10, 10, 10, 10),

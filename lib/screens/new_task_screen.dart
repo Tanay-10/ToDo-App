@@ -1,47 +1,41 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:todo/models/todo.dart';
 import 'package:intl/intl.dart';
 import 'package:todo/screens/routing.dart';
-
+import 'package:todo/task.dart';
+import 'routing.dart' as routing;
 import '../database/sqlite.dart';
 
 class NewTaskScreen extends StatefulWidget {
-  const NewTaskScreen({Key? key}) : super(key: key);
-
-  // void initState() {
-  //   saveToSharedPref();
-  //   super.initState();
-  //   ToDoModel myTodo = ToDoModel(id: 1, title: "title", priority: 1);
-  //   Map<String, dynamic>? map = myTodo.toMap();
-  // }
-  //
-  // void saveToSharedPref() async {
-  //   await instance.setString("1", "goto bed");
-  //   String s = instance.getString("1")!;
-  // }
-  //
-  // void dispose() {}
+  const NewTaskScreen({Key? key, this.task}) : super(key: key);
+  final Task? task;
 
   @override
   _NewTaskScreenState createState() => _NewTaskScreenState();
 }
 
 class _NewTaskScreenState extends State<NewTaskScreen> {
-  String? taskName = "";
-  String dateString = "";
-  DateTime? selectedDate;
-  TimeOfDay? selectedTime;
-  int? selectedTaskListId;
-
-  String themeTag = "white";
-
   DateTime? date = null;
   TimeOfDay? time = null;
 
+  Task task = Task(
+    taskId: -1,
+    taskListId: 0,
+    taskName: "",
+    isFinished: false,
+    isRepeating: false,
+    parentTaskId: null,
+    deadlineDate: null,
+    deadlineTime: null,
+  );
+
   TextEditingController dateController = TextEditingController();
   TextEditingController timeController = TextEditingController();
+
+  RepeatCycle? chosenRepeatCycle;
+  RepeatFreq repeatFreq = RepeatFreq(num: 2, tenure: Tenure.days);
 
   List<String> dropdownOptions = [
     "No Repeat",
@@ -88,12 +82,13 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
     print("opened the calender");
     DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate: date == null ? DateTime.now() : date!,
+      initialDate:
+          task.deadlineDate == null ? DateTime.now() : task.deadlineDate!,
       firstDate: DateTime.now(),
       lastDate: DateTime(2101),
     );
     if (pickedDate != null) {
-      date = pickedDate;
+      task.deadlineDate = pickedDate;
       setState(() {});
       var dateString = DateFormat('EEEE, d MMM, yyyy').format(pickedDate);
       dateController.text = dateString;
@@ -104,10 +99,11 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
     print("opened the clock");
     TimeOfDay? pickedTime = await showTimePicker(
       context: context,
-      initialTime: time == null ? TimeOfDay.now() : time!,
+      initialTime:
+          task.deadlineTime == null ? TimeOfDay.now() : task.deadlineTime!,
     );
     if (pickedTime != null) {
-      time = pickedTime;
+      task.deadlineTime = pickedTime;
       setState(() {});
       var timeString = pickedTime.format(context);
       timeController.text = timeString;
@@ -149,7 +145,9 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
         TextButton(
           child: Text("Create"),
           onPressed: () {
-            listOptions.add(listController.text);
+            if (listController.text != " ") {
+              listOptions.add(listController.text);
+            }
             Navigator.pop(context);
             setState(() {});
           },
@@ -164,72 +162,73 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
         });
   }
 
-  @override
-  void initState() {
-    saveToSharedPref();
-    super.initState();
-    ToDoModel myTodo = ToDoModel(
-        id: 1,
-        title: "title",
-        priority: 1,
-        category_id: 5,
-        description: "abcd");
-    Map<String, dynamic>? map = myTodo.toMap();
+  void saveNewTask() async {
+    Map<String, dynamic> taskAsMap = task.toMap();
+    taskAsMap.remove("taskId");
+    int? taskId = await SqliteDB.insertTask(taskAsMap);
+    if (taskId == null) {
+      print("failed");
+    } else {
+      print("success");
+      Navigator.pop(context);
+      Navigator.pushNamedAndRemoveUntil(
+          context, routing.homeScreenId, (route) => false);
+    }
   }
 
-  void saveToSharedPref() async {
-    SharedPreferences instance = await SharedPreferences.getInstance();
-    await instance.setString("1", "goto bed");
-    String s = instance.getString("1")!;
-  }
-
-  @override
-  void dispose() {
-    // TODO: implement dispose
-    super.dispose();
-  }
+  // @override
+  // void initState() {
+  //   saveToSharedPref();
+  //   super.initState();
+  //   ToDoModel myTodo = ToDoModel(
+  //       id: 1,
+  //       title: "title",
+  //       priority: 1,
+  //       category_id: 5,
+  //       description: "abcd");
+  //   Map<String, dynamic>? map = myTodo.toMap();
+  // }
+  //
+  // void saveToSharedPref() async {
+  //   SharedPreferences instance = await SharedPreferences.getInstance();
+  //   await instance.setString("1", "goto bed");
+  //   String s = instance.getString("1")!;
+  // }
+  //
+  // @override
+  // void dispose() {
+  //   // TODO: implement dispose
+  //   super.dispose();
+  // }
 
   @override
   Widget build(BuildContext context) {
+    print(widget.task);
     return Scaffold(
       floatingActionButton: FloatingActionButton(
-          backgroundColor: CupertinoColors.systemBlue,
-          child: Icon(
-            Icons.check,
-            size: 40,
-          ),
-          onPressed: () async {
-            print("ToDo task saved");
-            // Map<String, dynamic> task = {
-            //   "taskListID": selectedTaskListId,
-            //   "parentTaskID": null,
-            //   "taskName": taskName,
-            //   "deadlineDate": selectedDate == null
-            //       ? null
-            //       : selectedDate!.millisecondsSinceEpoch,
-            //   // "deadlineTime":
-            //   //     selectedTime == null ? null : intFromTimeOfDay(selectedTime),
-            //   "isFinished": 0,
-            //   "isRepeated": 0
-            // };
-            // int? taskId = await SqliteDB.insertTask(task);
-            Navigator.pushNamed(context, homeScreenId);
-          }),
+        backgroundColor: CupertinoColors.systemBlue,
+        child: const Icon(
+          Icons.check,
+          size: 40,
+        ),
+        onPressed: () {
+          saveNewTask();
+        },
+      ),
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           "New Task",
           style: TextStyle(
-            // color: (themeTag == "white") ? Colors.green : Colors.blue,
             fontWeight: FontWeight.bold,
           ),
         ),
       ),
       body: Container(
-        padding: EdgeInsets.fromLTRB(10, 20, 0, 0),
+        padding: const EdgeInsets.fromLTRB(10, 20, 0, 0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               "What is to be done?",
               style: TextStyle(
                 color: Colors.black54,
@@ -242,10 +241,11 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
                 Flexible(
                   child: TextField(
                     onChanged: (String? value) {
-                      taskName = value ?? taskName;
+                      task.taskName = value == null ? task.taskName : value;
                     },
-                    decoration: InputDecoration(
-                      hintText: "Enter Text Here",
+                    decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.fromLTRB(0, 10, 0, 5),
+                      hintText: "Enter Task Here",
                       isDense: true,
                     ),
                     textAlignVertical: TextAlignVertical.bottom,
@@ -260,10 +260,10 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
                 ),
               ],
             ),
-            SizedBox(
+            const SizedBox(
               height: 30,
             ),
-            Text(
+            const Text(
               "Due Date",
               style: TextStyle(
                 color: Colors.black54,
@@ -278,8 +278,10 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
                     onTap: openDatePicker,
                     readOnly: true,
                     controller: dateController,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.fromLTRB(0, 10, 0, 5),
                       hintText: "Select the due date",
+                      isDense: true,
                     ),
                     // textDirection: TextDirection.ltr,
                     textAlignVertical: TextAlignVertical.bottom,
@@ -304,7 +306,7 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
                 ),
               ],
             ),
-            SizedBox(
+            const SizedBox(
               height: 13,
             ),
             Visibility(
@@ -316,8 +318,10 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
                       onTap: openTimePicker,
                       readOnly: true,
                       controller: timeController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.fromLTRB(0, 10, 0, 5),
                         hintText: "Set time",
+                        isDense: true,
                       ),
                       // textDirection: TextDirection.ltr,
                       textAlignVertical: TextAlignVertical.bottom,
@@ -343,66 +347,143 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
                 ],
               ),
             ),
-            SizedBox(
+            const SizedBox(
               height: 80,
             ),
-            Text("Repeat"),
-            DropdownButton<String>(
-              items: dropdownItemCreator(dropdownOptions),
-              value: selectedFrequency,
-              onChanged: (String? chosenValue) {
-                // print(chosenValue);
-                if (chosenValue != null) {
-                  if (chosenValue != dropdownOptions.last) {
-                    selectedFrequency = chosenValue;
-                    setState(() {});
-                  } else {
-                    AlertDialog alert = AlertDialog(
-                      title: Text(
-                        "Repeat",
-                        style: TextStyle(fontSize: 17),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          child: Text("Cancel"),
-                        ),
-                        TextButton(
-                          onPressed: () {},
-                          child: Text("Set"),
-                        )
-                      ],
-                      content: CupertinoPicker(
-                        magnification: 1.2,
-                        children: repeatSpan
-                            .map((item) => Center(
-                                  child: Text(item),
-                                ))
-                            .toList(),
-                        onSelectedItemChanged: (index) {
-                          print(index);
-                        },
-                        itemExtent: 60.0,
-                      ),
-                      elevation: 100.0,
-                    );
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return alert;
-                      },
-                      // barrierDismissible: false,
-                    );
-                  }
-                }
-              },
+            const Text("Repeat"),
+            Row(
+              children: [
+                const SizedBox(
+                  width: 10,
+                ),
+                DropdownButton<dynamic>(
+                    items: () {
+                      List<DropdownMenuItem<dynamic>> items = [];
+                      items.add(
+                        const DropdownMenuItem<dynamic>(
+                            child: Text(
+                              noRepeat,
+                            ),
+                            value: noRepeat),
+                      );
+                      for (var value in RepeatCycle.values) {
+                        items.add(
+                          DropdownMenuItem<dynamic>(
+                            child: Text(
+                              repeatCycleToUIString(value),
+                            ),
+                            value: value,
+                          ),
+                        );
+                      }
+                      return (items);
+                    }(),
+                    value: chosenRepeatCycle ?? noRepeat,
+                    onChanged: (dynamic chosenValue) {
+                      if (chosenValue != null) {
+                        if (chosenValue != noRepeat) {
+                          chosenRepeatCycle = null;
+                        } else {
+                          chosenRepeatCycle = chosenValue;
+                        }
+                        setState(() {});
+                      }
+                      // else {
+                      //   AlertDialog alert = AlertDialog(
+                      //     title: Text(
+                      //       "Repeat",
+                      //       style: TextStyle(fontSize: 17),
+                      //     ),
+                      //     actions: [
+                      //       TextButton(
+                      //         onPressed: () {
+                      //           Navigator.pop(context);
+                      //         },
+                      //         child: Text("Cancel"),
+                      //       ),
+                      //       TextButton(
+                      //         onPressed: () {},
+                      //         child: Text("Set"),
+                      //       )
+                      //     ],
+                      //     content: CupertinoPicker(
+                      //       magnification: 1.2,
+                      //       children: repeatSpan
+                      //           .map((item) => Center(
+                      //                 child: Text(item),
+                      //               ))
+                      //           .toList(),
+                      //       onSelectedItemChanged: (index) {
+                      //         print(index);
+                      //       },
+                      //       itemExtent: 60.0,
+                      //     ),
+                      //     elevation: 100.0,
+                      //   );
+                      //   showDialog(
+                      //     context: context,
+                      //     builder: (BuildContext context) {
+                      //       return alert;
+                      //     },
+                      //     // barrierDismissible: false,
+                      //   );
+                      // }
+                    }),
+              ],
             ),
-            SizedBox(
+            Visibility(
+              visible: chosenRepeatCycle == RepeatCycle.other,
+              child: Column(
+                children: [
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  DropdownButton(
+                      items: [2, 3, 4, 5, 6, 7, 8, 9, 10]
+                          .map((int t) => DropdownMenuItem<int>(
+                                child: Text(
+                                  t.toString(),
+                                ),
+                                value: t,
+                              ))
+                          .toList(),
+                      value: repeatFreq.num,
+                      onChanged: (value) {
+                        int x = repeatFreq.num;
+                        if (value != null) {
+                          repeatFreq.num = x;
+                          setState(() {});
+                        }
+                      }),
+                  const SizedBox(
+                    width: 10,
+                  ),
+                  DropdownButton<Tenure>(
+                    items: Tenure.values
+                        .map((Tenure t) => DropdownMenuItem<Tenure>(
+                              child: Text(
+                                describeEnum(t),
+                              ),
+                              value: t,
+                            ))
+                        .toList(),
+                    value: repeatFreq.tenure,
+                    onChanged: (value) {
+                      if (value != null) {
+                        repeatFreq.tenure = value;
+                        setState(() {});
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(
               height: 50,
             ),
-            Text("Add to List"),
+            const Text(
+              "Add to List",
+            ),
             Row(
               // mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -443,12 +524,65 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
       ),
     );
   }
-
-  // intFromTimeOfDay(TimeOfDay? timeToConvert) {
-  //   int convertedTime = timeToConvert!.hour * 60 + timeToConvert!.minute;
-  //   return convertedTime;
-  // }
 }
+
+// class EditableFieldWithCancelButton extends StatelessWidget {
+//   const EditableFieldWithCancelButton({
+//     Key? key,
+//     required this.hintText,
+//     required this.iconData,
+//     required this.textController,
+//     required this.picker,
+//     required this.onCancel,
+//     required this.enableCancelButton,
+//   }) : super(key: key);
+//
+//   final String hintText;
+//   final IconData iconData;
+//   final TextEditingController textController;
+//   final void Function() picker;
+//   final void Function() onCancel;
+//   final bool Function() enableCancelButton;
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return Row(
+//       children: [
+//         const SizedBox(width: 5),
+//         Flexible(
+//           child: TextField(
+//             controller: textController,
+//             decoration: InputDecoration(
+//               contentPadding: const EdgeInsets.fromLTRB(0, 10, 0, 5),
+//               isDense: true,
+//               hintText: hintText,
+//               enabledBorder: const UnderlineInputBorder(
+//                 borderSide: BorderSide(
+//                   color: Colors.white60,
+//                 ),
+//               ),
+//             ),
+//             onTap: picker,
+//             enableInteractiveSelection: false,
+//             showCursor: false,
+//             readOnly: true,
+//           ),
+//         ),
+//         const SizedBox(width: 5),
+//         CustomIconButton(
+//           iconData: iconData,
+//           onPressed: picker,
+//         ),
+//         Visibility(
+//             child: CustomIconButton(
+//               iconData: Icons.cancel_rounded,
+//               onPressed: onCancel,
+//             ),
+//             visible: enableCancelButton()),
+//       ],
+//     );
+//   }
+// }
 
 class CustomIconButton extends StatelessWidget {
   final IconData iconData;
