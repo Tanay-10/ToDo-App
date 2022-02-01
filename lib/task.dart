@@ -52,31 +52,31 @@ class Task {
   TimeOfDay? deadlineTime;
   bool isFinished;
   bool isRepeating;
-  void finishTask() {
-    isFinished = true;
-  }
+  // void finishTask() {
+  //   isFinished = true;
+  // }
 
   Map<String, dynamic> toMap() {
     Map<String, dynamic> taskAsMap = {
-      "taskID": taskId,
-      "taskListID": taskListId,
-      "parentTaskID": null,
+      "taskId": taskId,
+      "taskListId": taskListId,
+      "parentTaskId": null,
       "taskName": taskName,
       "deadlineDate":
           deadlineDate == null ? null : deadlineDate!.millisecondsSinceEpoch,
       "deadlineTime":
           deadlineTime == null ? null : intFromTimeOfDay(deadlineTime!),
-      "isFinished": 0,
-      "isRepeating": 0,
+      "isFinished": isFinished == true ? 1 : 0,
+      "isRepeating": isRepeating == true ? 1 : 0,
     };
     return (taskAsMap);
   }
 
   static Task fromMap(Map<String, dynamic> taskAsMap) {
     Task task = Task(
-      taskId: taskAsMap["taskID"],
-      taskListId: taskAsMap["taskListID"],
-      parentTaskId: taskAsMap["parentTaskID"],
+      taskId: taskAsMap["taskId"],
+      taskListId: taskAsMap["taskListId"],
+      parentTaskId: taskAsMap["parentTaskId"],
       taskName: taskAsMap["taskName"],
       deadlineDate: taskAsMap["deadlineDate"] == null
           ? null
@@ -107,9 +107,9 @@ class RepeatingTask {
     required this.deadlineDate,
     this.repeatFrequency,
     this.deadlineTime,
-    required this.taskListID,
+    required this.taskListId,
   });
-  int taskListID;
+  int taskListId;
   int repeatingTaskId;
   String repeatingTaskName;
   RepeatCycle repeatCycle;
@@ -119,7 +119,7 @@ class RepeatingTask {
 }
 
 class TaskList {
-  int taskListID;
+  int taskListId;
   String taskListName;
   List<Task> nonRepeatingTasks;
   List<RepeatingTask> repeatingTasks;
@@ -128,7 +128,7 @@ class TaskList {
     required this.nonRepeatingTasks,
     required this.repeatingTasks,
     required this.activeRepeatingTaskInstances,
-    required this.taskListID,
+    required this.taskListId,
     required this.taskListName,
   });
 /*List<Task> getActiveTasks() {
