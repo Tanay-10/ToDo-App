@@ -12,7 +12,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  Future<List<Task>> taskList = SqliteDB.getAllTasks();
+  Future<List<Task>> taskList = SqliteDB.getAllPendingTasks();
 
   @override
   Widget build(BuildContext context) {
@@ -34,60 +34,54 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Colors.blue,
         title: Text("ToDo"),
       ),
-      body:
-          // Column(
-          //   children: [
-          //     Container(
-          //       child: Text("Hello"),
-          //     ),
-          FutureBuilder<List<Task>>(
-              future: taskList,
-              builder: (BuildContext context, AsyncSnapshot snapshot) {
-                if (snapshot.hasData) {
-                  var data = snapshot.data;
-                  List<Widget> children = [];
-                  children.add(Container(
-                    child: const Center(
-                      child: Text(
-                        "Overdue",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: CupertinoColors.activeBlue,
-                        ),
-                      ),
-                    ),
-                  ));
-                  for (var task in data) {
-                    print("FutureBuilder");
-                    children.add(
-                      ActivityCard(
-                          header: task.taskName,
-                          date: task.deadlineDate == null
-                              ? ""
-                              : task.deadlineDate.toString(),
-                          list: task.taskListId.toString(),
-                          onTap: () {
-                            Navigator.pushNamed(
-                                context, routing.newTaskScreenId,
-                                arguments: task);
-                          }),
-                    );
-                  }
-                  return ListView(
-                    // scrollDirection: Axis.vertical,
-                    children: children,
-                    padding: const EdgeInsets.all(5),
-                  );
-                } else if (snapshot.hasError) {
-                  // print(snapshot.hasError);
-                  return const Text("Some error");
-                } else {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
-              }),
+      body: FutureBuilder<List<Task>>(
+          future: taskList,
+          builder: (BuildContext context, AsyncSnapshot snapshot) {
+            if (snapshot.hasData) {
+              var data = snapshot.data;
+              List<Widget> children = [];
+              // children.add(Container(
+              //   child: const Center(
+              //     child: Text(
+              //       "Overdue",
+              //       style: TextStyle(
+              //         fontSize: 20,
+              //         fontWeight: FontWeight.bold,
+              //         color: CupertinoColors.activeBlue,
+              //       ),
+              //     ),
+              //   ),
+              // ));
+              for (var task in data) {
+                print("FutureBuilder");
+                children.add(
+                  ActivityCard(
+                      task: task,
+                      header: task.taskName,
+                      date: task.deadlineDate == null
+                          ? ""
+                          : task.deadlineDate.toString(),
+                      list: task.taskListId.toString(),
+                      onTap: () {
+                        Navigator.pushNamed(context, routing.newTaskScreenId,
+                            arguments: task);
+                      }),
+                );
+              }
+              return ListView(
+                // scrollDirection: Axis.vertical,
+                children: children,
+                padding: const EdgeInsets.all(5),
+              );
+            } else if (snapshot.hasError) {
+              // print(snapshot.hasError);
+              return const Text("Some error");
+            } else {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+          }),
       // ],
       // ),
       // Container(
@@ -119,14 +113,18 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 
 class ActivityCard extends StatelessWidget {
+  final Task task;
   final String header, date, list;
+  // final bool isFinished;
   final void Function() onTap;
 
   const ActivityCard({
+    required this.task,
     required this.header,
     required this.date,
     required this.list,
     required this.onTap,
+    // required this.isFinished,
     Key? key,
   }) : super(key: key);
 
@@ -148,10 +146,17 @@ class ActivityCard extends StatelessWidget {
                 width: 20,
                 height: 25,
                 child: Checkbox(
-                  value: false,
-                  onChanged: (value) {
+                  onChanged: (value) async {
+                    if (value == true) {
+                      task.isFinished = true;
+                      await SqliteDB.updateTask(task);
+                      Navigator.pushNamedAndRemoveUntil(
+                          context, routing.homeScreenId, (route) => false);
+                    }
+                    value = true;
                     print("task finished");
                   },
+                  value: false,
                   autofocus: true,
                 ),
               ),
