@@ -13,6 +13,32 @@ class NewTaskScreen extends StatefulWidget {
 }
 
 class _NewTaskScreenState extends State<NewTaskScreen> {
+  // @override
+  // initState() {
+  //   super.initState();
+  //   task = widget.task ?? task;
+  //   dateController.text = task.deadlineDate == null
+  //       ? ""
+  //       : DateFormat('EEEE, d MMM, yyyy').format(task.deadlineDate!);
+  //   timeController.text =
+  //       task.deadlineTime == null ? "" : task.deadlineTime!.format(context);
+  //   nameController.text == task.taskName;
+  // }
+
+  @override
+  didChangeDependencies() {
+    super.didChangeDependencies();
+    task = widget.task ?? task;
+    dateController.text = task.deadlineDate == null
+        ? ""
+        : DateFormat('EEEE, d MMM, yyyy').format(task.deadlineDate!);
+    timeController.text =
+        task.deadlineTime == null ? "" : task.deadlineTime!.format(context);
+    nameController.text == task.taskName;
+  }
+
+  TextEditingController nameController = TextEditingController();
+
   Task task = Task(
       isFinished: false,
       isRepeating: false,
@@ -74,9 +100,37 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
     int? taskId = await SqliteDB.insertTask(taskAsMap);
     if (taskId == null) {
     } else {
-      Navigator.pop(context);
+      // Navigator.pop(context);
       Navigator.pushNamedAndRemoveUntil(
           context, routing.homeScreenId, (route) => false);
+    }
+  }
+
+  void updateTask() async {
+    bool success = await SqliteDB.updateTask(task);
+    if (success) {
+      print("success");
+      // Navigator.pop(context);
+      Navigator.pushNamedAndRemoveUntil(
+          context, routing.homeScreenId, (route) => false);
+    } else {
+      print("failed");
+
+      /// TODO : show some error
+    }
+  }
+
+  void deleteTask() async {
+    bool success = await SqliteDB.deleteTask(task);
+    if (success) {
+      print("task deleted");
+      // Navigator.pop(context);
+      Navigator.pushNamedAndRemoveUntil(
+          context, routing.homeScreenId, (route) => false);
+    } else {
+      print("failed");
+
+      /// TODO : show some error
     }
   }
 
@@ -90,11 +144,23 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
           size: 35,
         ),
         onPressed: () {
-          saveNewTask();
+          if (widget.task == null) {
+            saveNewTask();
+          } else {
+            updateTask();
+          }
         },
       ),
       appBar: AppBar(
-        title: Text("New Task"),
+        title: Text(widget.task == null ? "New Task" : "Edit Task"),
+        actions: (widget.task == null)
+            ? []
+            : [
+                IconButton(
+                  onPressed: deleteTask,
+                  icon: Icon(Icons.delete_rounded),
+                )
+              ],
       ),
       body: Container(
         padding: EdgeInsets.all(10),
@@ -115,6 +181,8 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
                 const SizedBox(width: 10),
                 Flexible(
                   child: TextField(
+                    autofocus: false,
+                    controller: nameController,
                     decoration: const InputDecoration(
                       contentPadding: EdgeInsets.fromLTRB(0, 10, 0, 5),
                       isDense: true,
