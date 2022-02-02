@@ -1,3 +1,4 @@
+import 'dart:async';
 import "package:path/path.dart";
 import 'package:sqflite/sqflite.dart';
 import 'package:todo/task.dart';
@@ -16,6 +17,28 @@ class SqliteDB {
     return _db!;
   }
 
+  static Future _onConfigure(Database db) async {
+    await db.execute("PRAGMA foreign_keys = ON");
+  }
+
+  static Future _onCreate(Database db, int t) async {
+    await db.execute('CREATE TABLE $listTable (listId INTEGER PRIMARY KEY, '
+        'listName TEXT, '
+        'isActive INTEGER)');
+
+    await db.execute('CREATE TABLE $taskTable (taskId INTEGER PRIMARY KEY, '
+        'taskListId INTEGER, '
+        'parentTaskId INTEGER, '
+        'taskName TEXT, '
+        'deadlineDate INTEGER, '
+        'deadlineTime INTEGER, '
+        'isFinished INTEGER, '
+        'isRepeating INTEGER,'
+        'FOREIGN KEY (taskListId) REFERENCES LIST (listId) ON DELETE NO ACTION ON UPDATE NO ACTION)');
+
+    await db.insert(listTable, {"listName": "Default", "isActive": 1});
+  }
+
   /// Initialize DB
   static initDb() async {
     String folderPath = await getDatabasesPath();
@@ -24,15 +47,8 @@ class SqliteDB {
     var taskDb = await openDatabase(
       path,
       version: 3,
-      onCreate: (Database db, int t) async {
-        await db.execute(
-            'CREATE TABLE $listTable (listId INTEGER PRIMARY KEY, listName TEXT, isActive INTEGER');
-
-        await db.execute(
-            'CREATE TABLE $taskTable (taskId INTEGER PRIMARY KEY, taskListId INTEGER, parentTaskId INTEGER, taskName TEXT, deadlineDate INTEGER, deadlineTime INTEGER, isFinished INTEGER, isRepeating INTEGER)');
-
-        await db.insert(listTable, {"listName": "Default", "isActive": 1});
-      },
+      onConfigure: _onConfigure,
+      onCreate: _onCreate,
     );
     _db = taskDb;
     return taskDb;
