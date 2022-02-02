@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:provider/provider.dart';
 import 'package:todo/task.dart';
 import 'routing.dart' as routing;
+import 'package:todo/shared_data.dart';
 import 'package:todo/database/sqlite.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -12,48 +14,35 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  Future<List<Task>> taskList = SqliteDB.getAllPendingTasks();
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      floatingActionButton: FloatingActionButton(
-          backgroundColor: CupertinoColors.systemBlue,
-          elevation: 1.0,
-          hoverElevation: 10.0,
-          child: const Icon(
-            Icons.add,
-            size: 50,
-          ),
-          onPressed: () {
-            print("clicked");
-            Navigator.pushNamed(context, routing.newTaskScreenId,
-                arguments: Task);
-          }),
-      appBar: AppBar(
-        backgroundColor: Colors.blue,
-        title: Text("ToDo"),
-      ),
-      body: FutureBuilder<List<Task>>(
-          future: taskList,
-          builder: (BuildContext context, AsyncSnapshot snapshot) {
-            if (snapshot.hasData) {
-              var data = snapshot.data;
+    return Consumer<ToDoData>(builder: (context, sd, x) {
+      return Scaffold(
+        floatingActionButton: FloatingActionButton(
+            backgroundColor: CupertinoColors.systemBlue,
+            elevation: 1.0,
+            hoverElevation: 10.0,
+            child: const Icon(
+              Icons.add,
+              size: 50,
+            ),
+            onPressed: () {
+              print("clicked");
+              Navigator.pushNamed(
+                context,
+                routing.newTaskScreenId, /* arguments: Task*/
+              );
+            }),
+        appBar: AppBar(
+          // backgroundColor: Colors.blue,
+          title: Text("ToDo"),
+        ),
+        body: () {
+          {
+            if (sd.isDataLoaded) {
+              var data = sd.activeTaskList;
               List<Widget> children = [];
-              // children.add(Container(
-              //   child: const Center(
-              //     child: Text(
-              //       "Overdue",
-              //       style: TextStyle(
-              //         fontSize: 20,
-              //         fontWeight: FontWeight.bold,
-              //         color: CupertinoColors.activeBlue,
-              //       ),
-              //     ),
-              //   ),
-              // ));
               for (var task in data) {
-                print("FutureBuilder");
                 children.add(
                   ActivityCard(
                       task: task,
@@ -73,42 +62,15 @@ class _MyHomePageState extends State<MyHomePage> {
                 children: children,
                 padding: const EdgeInsets.all(5),
               );
-            } else if (snapshot.hasError) {
-              // print(snapshot.hasError);
-              return const Text("Some error");
             } else {
               return const Center(
                 child: CircularProgressIndicator(),
               );
             }
-          }),
-      // ],
-      // ),
-      // Container(
-      //   // color: Colors.blueAccent,
-      //   padding: EdgeInsets.fromLTRB(10, 10, 10, 10),
-      // child: Scrollbar(
-      //   isAlwaysShown: true,
-      //   showTrackOnHover: true,
-      //   hoverThickness: 10,
-      //   thickness: 10,
-      //   radius: Radius.circular(10),
-      //   child: ListView(
-      //     scrollDirection: Axis.vertical,
-      //     children: [
-      //       Container(
-      //         child: Text(
-      //           "Overdue",
-      //           style: TextStyle(
-      //             fontSize: 18,
-      //             color: Colors.indigo.shade900,
-      //             fontWeight: FontWeight.bold,
-      //           ),
-      //         ),
-      //         padding: EdgeInsets.fromLTRB(7, 10, 0, 10),
-      //       ),
-      //        ])
-    );
+          }
+        }(),
+      );
+    });
   }
 }
 
@@ -153,8 +115,8 @@ class ActivityCard extends StatelessWidget {
                       Navigator.pushNamedAndRemoveUntil(
                           context, routing.homeScreenId, (route) => false);
                     }
-                    value = true;
-                    print("task finished");
+                    // value = true;
+                    // print("task finished");
                   },
                   value: false,
                   autofocus: true,
