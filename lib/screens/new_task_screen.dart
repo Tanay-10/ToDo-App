@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:todo/task.dart';
 import 'routing.dart' as routing;
 import '../database/sqlite.dart';
+import 'package:provider/provider.dart';
+import 'package:todo/shared_data.dart';
 
 class NewTaskScreen extends StatefulWidget {
   NewTaskScreen({Key? key, this.task}) : super(key: key);
@@ -43,7 +45,7 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
       isFinished: false,
       isRepeating: false,
       taskName: "",
-      taskListId: 0,
+      taskListId: 1,
       taskId: -1,
       parentTaskId: null,
       deadlineDate: null,
@@ -144,11 +146,14 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
           size: 35,
         ),
         onPressed: () {
-          if (widget.task == null) {
-            saveNewTask();
-          } else {
-            updateTask();
-          }
+          // if (widget.task == null) {
+          //   print("saved");
+          //   saveNewTask();
+          // } else {
+          //   updateTask();
+          // }
+          Provider.of<ToDoData>(context, listen: false).addTask(task);
+          Navigator.pop(context);
         },
       ),
       appBar: AppBar(
@@ -337,7 +342,9 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
                       }
                     },
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(
+                    width: 10,
+                  ),
                   DropdownButton<Tenure>(
                     items: Tenure.values
                         .map((Tenure t) => DropdownMenuItem<Tenure>(
