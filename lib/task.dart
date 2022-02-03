@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 //used to display in UI
 const String noRepeat = "No Repeat";
+const String defaultListName = "Default";
+const int defaultListId = 1;
 
 enum RepeatCycle {
   onceADay,
@@ -35,7 +37,7 @@ class RepeatFreq {
 class Task {
   Task({
     required this.taskName,
-    required this.taskListId,
+    required this.listId,
     required this.taskId,
     required this.isFinished,
     required this.isRepeating,
@@ -45,21 +47,21 @@ class Task {
   });
 
   int taskId;
-  int taskListId;
+  int listId;
   int? parentTaskId; //used for repeated task instances only
   String taskName;
   DateTime? deadlineDate;
   TimeOfDay? deadlineTime;
   bool isFinished;
   bool isRepeating;
-  // void finishTask() {
-  //   isFinished = true;
-  // }
+  void finishTask() {
+    isFinished = true;
+  }
 
   Map<String, dynamic> toMap() {
     Map<String, dynamic> taskAsMap = {
       "taskId": taskId,
-      "taskListId": taskListId,
+      "listId": listId,
       "parentTaskId": null,
       "taskName": taskName,
       "deadlineDate":
@@ -75,7 +77,7 @@ class Task {
   static Task fromMap(Map<String, dynamic> taskAsMap) {
     Task task = Task(
       taskId: taskAsMap["taskId"],
-      taskListId: taskAsMap["taskListId"],
+      listId: taskAsMap["listId"],
       parentTaskId: taskAsMap["parentTaskId"],
       taskName: taskAsMap["taskName"],
       deadlineDate: taskAsMap["deadlineDate"] == null
@@ -119,18 +121,34 @@ class RepeatingTask {
 }
 
 class TaskList {
-  int taskListId;
-  String taskListName;
-  List<Task> nonRepeatingTasks;
-  List<RepeatingTask> repeatingTasks;
-  List<Task> activeRepeatingTaskInstances;
+  int listId;
+  String listName;
+  bool isActive;
+  // List<Task> nonRepeatingTasks;
+  // List<RepeatingTask> repeatingTasks;
+  // List<Task> activeRepeatingTaskInstances;
   TaskList({
-    required this.nonRepeatingTasks,
-    required this.repeatingTasks,
-    required this.activeRepeatingTaskInstances,
-    required this.taskListId,
-    required this.taskListName,
+    required this.listId,
+    required this.listName,
+    required this.isActive,
   });
+
+  Map<String, dynamic> toMap() {
+    return {
+      "listId": listId,
+      "listName": listName,
+      "isActive": isActive ? 1 : 0,
+    };
+  }
+
+  static TaskList fromMap(Map<String, dynamic> taskListAsMap) {
+    return (TaskList(
+      isActive: taskListAsMap["isActive"] == 1 ? true : false,
+      listId: taskListAsMap["listId"],
+      listName: taskListAsMap["listName"],
+    ));
+  }
+
 /*List<Task> getActiveTasks() {
     //TODO::Select repeating Task Instances as well
     List<Task> activeNonRepeatingTasks = [];
@@ -151,26 +169,4 @@ class TaskList {
 
   void FinishTask(Task task) {}*/
 
-/*void addTask({
-    required String taskName,
-    DateTime? deadlineDate,
-    TimeOfDay? deadlineTime,
-    int? parentTaskID,
-  }) {
-    //
-    Task(
-      taskName: taskName,
-      finished: false,
-      taskListID: taskListID,
-      deadlineDate: deadlineDate,
-      deadlineTime: deadlineTime,
-      parentTaskID: parentTaskID,
-    );
-
-    if (parentTaskID != null) {
-      //
-    }
-  }*/
-
-/*void finishTask(Task task) {}*/
 }
