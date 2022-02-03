@@ -27,16 +27,17 @@ class SqliteDB {
         'isActive INTEGER)');
 
     await db.execute('CREATE TABLE $taskTable (taskId INTEGER PRIMARY KEY, '
-        'taskListId INTEGER, '
+        'listId INTEGER, '
         'parentTaskId INTEGER, '
         'taskName TEXT, '
         'deadlineDate INTEGER, '
         'deadlineTime INTEGER, '
         'isFinished INTEGER, '
         'isRepeating INTEGER,'
-        'FOREIGN KEY (taskListId) REFERENCES LIST (listId) ON DELETE NO ACTION ON UPDATE NO ACTION)');
+        'FOREIGN KEY (listId) REFERENCES LIST (listId) ON DELETE NO ACTION ON UPDATE NO ACTION)');
 
-    await db.insert(listTable, {"listName": "Default", "isActive": 1});
+    await db.insert(listTable,
+        {"listId": defaultListId, "listName": defaultListName, "isActive": 1});
   }
 
   /// Initialize DB
@@ -69,17 +70,17 @@ class SqliteDB {
   static Future<List<Task>> getAllPendingTasks() async {
     var dbClient = await db;
     //await Future.delayed(Duration(seconds: 1));
-    List<Map<String, dynamic>> taskListFromDB = await dbClient.query(
+    List<Map<String, dynamic>> tasksFromDB = await dbClient.query(
       taskTable,
       where: "isFinished = ?",
       whereArgs: [0],
     );
-    List<Task> taskListAsObjects = [];
-    for (var map in taskListFromDB) {
+    List<Task> tasksAsObjects = [];
+    for (var map in tasksFromDB) {
       print(map);
-      taskListAsObjects.add(Task.fromMap(map));
+      tasksAsObjects.add(Task.fromMap(map));
     }
-    return (taskListAsObjects);
+    return (tasksAsObjects);
   }
 
   static Future<bool> updateTask(Task task) async {
@@ -102,5 +103,21 @@ class SqliteDB {
       whereArgs: [task.taskId],
     );
     return (changes == 1);
+  }
+
+  static Future<List<TaskList>> getAllActiveLists() async {
+    var dbClient = await db;
+    //await Future.delayed(Duration(seconds: 1));
+    List<Map<String, dynamic>> taskListsFromDB = await dbClient.query(
+      listTable,
+      where: "isActive = ?",
+      whereArgs: [1],
+    );
+    List<TaskList> taskListAsObjects = [];
+    for (var map in taskListsFromDB) {
+      print(map);
+      taskListAsObjects.add(TaskList.fromMap(map));
+    }
+    return (taskListAsObjects);
   }
 }
