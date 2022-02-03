@@ -15,43 +15,33 @@ class NewTaskScreen extends StatefulWidget {
 }
 
 class _NewTaskScreenState extends State<NewTaskScreen> {
-  // @override
-  // initState() {
-  //   super.initState();
-  //   task = widget.task ?? task;
-  //   dateController.text = task.deadlineDate == null
-  //       ? ""
-  //       : DateFormat('EEEE, d MMM, yyyy').format(task.deadlineDate!);
-  //   timeController.text =
-  //       task.deadlineTime == null ? "" : task.deadlineTime!.format(context);
-  //   nameController.text == task.taskName;
-  // }
+  Task task = Task(
+    isFinished: false,
+    isRepeating: false,
+    taskName: "",
+    listId: defaultListId,
+    taskId: -1,
+    parentTaskId: null,
+    deadlineDate: null,
+    deadlineTime: null,
+  );
+
+  TextEditingController dateController = TextEditingController();
+  TextEditingController timeController = TextEditingController();
+  TextEditingController nameController = TextEditingController();
 
   @override
   didChangeDependencies() {
     super.didChangeDependencies();
     task = widget.task ?? task;
+    nameController.text == task.taskName;
     dateController.text = task.deadlineDate == null
         ? ""
         : DateFormat('EEEE, d MMM, yyyy').format(task.deadlineDate!);
     timeController.text =
         task.deadlineTime == null ? "" : task.deadlineTime!.format(context);
-    nameController.text == task.taskName;
   }
 
-  TextEditingController nameController = TextEditingController();
-
-  Task task = Task(
-      isFinished: false,
-      isRepeating: false,
-      taskName: "",
-      taskListId: 1,
-      taskId: -1,
-      parentTaskId: null,
-      deadlineDate: null,
-      deadlineTime: null);
-  TextEditingController dateController = TextEditingController();
-  TextEditingController timeController = TextEditingController();
   RepeatCycle? chosenRepeatCycle;
   RepeatFreq repeatFrequency = RepeatFreq(num: 2, tenure: Tenure.days);
 
@@ -97,43 +87,18 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
   }
 
   void saveNewTask() async {
-    Map<String, dynamic> taskAsMap = task.toMap();
-    taskAsMap.remove("taskId");
-    int? taskId = await SqliteDB.insertTask(taskAsMap);
-    if (taskId == null) {
-    } else {
-      // Navigator.pop(context);
-      Navigator.pushNamedAndRemoveUntil(
-          context, routing.homeScreenId, (route) => false);
-    }
+    Provider.of<ToDoData>(context, listen: false).addTask(task);
+    Navigator.pop(context);
   }
 
   void updateTask() async {
-    bool success = await SqliteDB.updateTask(task);
-    if (success) {
-      print("success");
-      // Navigator.pop(context);
-      Navigator.pushNamedAndRemoveUntil(
-          context, routing.homeScreenId, (route) => false);
-    } else {
-      print("failed");
-
-      /// TODO : show some error
-    }
+    Provider.of<ToDoData>(context, listen: false).updateTask(task);
+    Navigator.pop(context);
   }
 
   void deleteTask() async {
-    bool success = await SqliteDB.deleteTask(task);
-    if (success) {
-      print("task deleted");
-      // Navigator.pop(context);
-      Navigator.pushNamedAndRemoveUntil(
-          context, routing.homeScreenId, (route) => false);
-    } else {
-      print("failed");
-
-      /// TODO : show some error
-    }
+    Provider.of<ToDoData>(context, listen: false).deleteTask(task);
+    Navigator.pop(context);
   }
 
   @override
@@ -146,14 +111,12 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
           size: 35,
         ),
         onPressed: () {
-          // if (widget.task == null) {
-          //   print("saved");
-          //   saveNewTask();
-          // } else {
-          //   updateTask();
-          // }
-          Provider.of<ToDoData>(context, listen: false).addTask(task);
-          Navigator.pop(context);
+          if (widget.task == null) {
+            print("saved");
+            saveNewTask();
+          } else {
+            updateTask();
+          }
         },
       ),
       appBar: AppBar(
@@ -186,19 +149,23 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
                 const SizedBox(width: 10),
                 Flexible(
                   child: TextField(
-                    autofocus: false,
-                    controller: nameController,
-                    decoration: const InputDecoration(
+                    // autofocus: false,
+                    decoration: InputDecoration(
                       contentPadding: EdgeInsets.fromLTRB(0, 10, 0, 5),
                       isDense: true,
                       hintText: "Enter Task Here",
                     ),
+                    controller: nameController,
                     onChanged: (String? value) {
                       task.taskName = value == null ? task.taskName : value;
                     },
                   ),
                 ),
-                CustomIconButton(iconData: Icons.mic, onPressed: () {}),
+                CustomIconButton(
+                  iconData: Icons.mic,
+                  size: 30,
+                  onPressed: () {},
+                ),
               ],
             ),
             const SizedBox(
@@ -364,6 +331,7 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
               ]),
             ),
 
+            /// Select taskList
             const SizedBox(height: 40),
             const Text(
               "Select a List",
@@ -376,11 +344,33 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
             Row(
               children: [
                 const SizedBox(width: 10),
-                DropdownButton<String>(
-                  items: dropdownItemCreator(["Default"]),
-                  value: "Default",
-                  onChanged: (value) {},
-                ),
+                Consumer<ToDoData>(builder: (context, todoData, child) {
+                  return Expanded(
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      items: () {
+                        var activeLists = todoData.activeLists;
+                        List<DropdownMenuItem<String>> menuItems = [];
+                        for (var taskList in activeLists) {
+                          menuItems.add(
+                            DropdownMenuItem<String>(
+                              child: Text(taskList.listName),
+                              value: taskList.listName,
+                            ),
+                          );
+                        }
+                        return menuItems;
+                      }(),
+                      value: defaultListName,
+                      onChanged: (value) {},
+                    ),
+                  );
+                }),
+                CustomIconButton(
+                  size: 30,
+                  iconData: Icons.playlist_add_sharp,
+                  onPressed: () {},
+                )
               ],
             ),
           ],
@@ -432,13 +422,17 @@ class EditableFieldWithCancelButton extends StatelessWidget {
             readOnly: true,
           ),
         ),
-        const SizedBox(width: 5),
+        const SizedBox(
+          width: 5,
+        ),
         CustomIconButton(
+          size: 30,
           iconData: iconData,
           onPressed: picker,
         ),
         Visibility(
             child: CustomIconButton(
+              size: 30,
               iconData: Icons.cancel_rounded,
               onPressed: onCancel,
             ),
@@ -451,11 +445,13 @@ class EditableFieldWithCancelButton extends StatelessWidget {
 class CustomIconButton extends StatelessWidget {
   const CustomIconButton({
     required this.iconData,
+    required this.size,
     required this.onPressed,
     Key? key,
   }) : super(key: key);
 
   final IconData iconData;
+  final double size;
   final void Function() onPressed;
 
   @override
@@ -466,7 +462,10 @@ class CustomIconButton extends StatelessWidget {
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         minimumSize: Size.zero,
       ),
-      child: Icon(iconData),
+      child: Icon(
+        iconData,
+        size: size,
+      ),
       onPressed: onPressed,
     );
   }
