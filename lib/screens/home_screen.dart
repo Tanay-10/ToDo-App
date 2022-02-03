@@ -40,7 +40,7 @@ class _MyHomePageState extends State<MyHomePage> {
         body: () {
           {
             if (sd.isDataLoaded) {
-              var data = sd.activeTaskList;
+              var data = sd.activeTasks;
               List<Widget> children = [];
               for (var task in data) {
                 children.add(
@@ -50,7 +50,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       date: task.deadlineDate == null
                           ? ""
                           : task.deadlineDate.toString(),
-                      list: task.taskListId.toString(),
+                      list: task.listId.toString(),
                       onTap: () {
                         Navigator.pushNamed(context, routing.newTaskScreenId,
                             arguments: task);
@@ -77,7 +77,6 @@ class _MyHomePageState extends State<MyHomePage> {
 class ActivityCard extends StatelessWidget {
   final Task task;
   final String header, date, list;
-  // final bool isFinished;
   final void Function() onTap;
 
   const ActivityCard({
@@ -109,17 +108,11 @@ class ActivityCard extends StatelessWidget {
                 height: 25,
                 child: Checkbox(
                   onChanged: (value) async {
-                    if (value == true) {
-                      task.isFinished = true;
-                      await SqliteDB.updateTask(task);
-                      Navigator.pushNamedAndRemoveUntil(
-                          context, routing.homeScreenId, (route) => false);
-                    }
-                    // value = true;
-                    // print("task finished");
+                    Provider.of<ToDoData>(context, listen: false)
+                        .finishTask(task);
                   },
                   value: false,
-                  autofocus: true,
+                  // autofocus: true,
                 ),
               ),
               const SizedBox(
@@ -130,7 +123,7 @@ class ActivityCard extends StatelessWidget {
                 children: [
                   Text(
                     header,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.white,
                       fontSize: 20.0,
                       fontWeight: FontWeight.w500,
