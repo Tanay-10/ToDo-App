@@ -5,7 +5,7 @@ import 'package:todo/task.dart';
 import 'routing.dart' as routing;
 import '../database/sqlite.dart';
 import 'package:provider/provider.dart';
-import 'package:todo/shared_data.dart';
+import 'package:todo/states/shared_data.dart';
 
 class NewTaskScreen extends StatefulWidget {
   NewTaskScreen({Key? key, this.task}) : super(key: key);
@@ -346,30 +346,65 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
                 const SizedBox(width: 10),
                 Consumer<ToDoData>(builder: (context, todoData, child) {
                   return Expanded(
-                    child: DropdownButton<String>(
+                    child: DropdownButton<int>(
                       isExpanded: true,
                       items: () {
                         var activeLists = todoData.activeLists;
-                        List<DropdownMenuItem<String>> menuItems = [];
+                        List<DropdownMenuItem<int>> menuItems = [];
                         for (var taskList in activeLists) {
                           menuItems.add(
-                            DropdownMenuItem<String>(
+                            DropdownMenuItem<int>(
                               child: Text(taskList.listName),
-                              value: taskList.listName,
+                              value: taskList.listId,
                             ),
                           );
                         }
                         return menuItems;
                       }(),
-                      value: defaultListName,
-                      onChanged: (value) {},
+                      value: task.listId,
+                      onChanged: (value) {
+                        task.listId = value ?? task.listId;
+                      },
                     ),
                   );
                 }),
                 CustomIconButton(
                   size: 30,
                   iconData: Icons.playlist_add_sharp,
-                  onPressed: () {},
+                  onPressed: () {
+                    showDialog(
+                        context: context,
+                        builder: (context) {
+                          String listName = "";
+                          return AlertDialog(
+                            title: Text("Add new list"),
+                            content: TextField(
+                              decoration: InputDecoration(
+                                hintText: "Enter name of new list",
+                              ),
+                              onChanged: (value) {
+                                listName = value;
+                                print(listName);
+                                setState(() {});
+                              },
+                            ),
+                            actions: <Widget>[
+                              TextButton(
+                                onPressed: () {
+                                  Provider.of<ToDoData>(
+                                    context,
+                                    listen: false,
+                                  ).addList(listName);
+                                  Navigator.pop(context);
+                                },
+                                child: Text(
+                                  "OK",
+                                ),
+                              )
+                            ],
+                          );
+                        });
+                  },
                 )
               ],
             ),
