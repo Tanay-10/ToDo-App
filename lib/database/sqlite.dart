@@ -120,4 +120,14 @@ class SqliteDB {
     }
     return (taskListAsObjects);
   }
+
+  static Future<int?> insertList(Map<String, dynamic> taskListData) async {
+    var dbClient = await db;
+    int id = await dbClient.insert(listTable, taskListData);
+    if (id != 0) {
+      return (id);
+    } else {
+      return (null);
+    }
+  }
 }
