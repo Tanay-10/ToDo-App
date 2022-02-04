@@ -5,7 +5,7 @@ import 'screens/new_task_screen.dart';
 import 'screens/routing.dart' as routing;
 import 'screens/home_screen.dart';
 import 'package:todo/task.dart';
-import 'package:todo/shared_data.dart';
+import 'package:todo/states/shared_data.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
