@@ -2,7 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:todo/task.dart';
-import 'database/sqlite.dart';
+import '../database/sqlite.dart';
+
+class AggregatedTasks {
+  TaskList taskList;
+  List<Task> overdue = [],
+      today = [],
+      thisWeek = [],
+      thisMonth = [],
+      noDeadLine = [];
+  AggregatedTasks({required this.taskList});
+}
 
 class ToDoData extends ChangeNotifier {
   bool isDataLoaded = false;
@@ -14,11 +24,28 @@ class ToDoData extends ChangeNotifier {
 
   List<TaskList> activeLists = [];
 
+  Map<int, AggregatedTasks> aggregatedTasksArray = {};
+
   void init() async {
     activeTasks = await SqliteDB.getAllPendingTasks();
     activeLists = await SqliteDB.getAllActiveLists();
+    for (var taskList in activeLists) {
+      aggregatedTasksArray[taskList.listId] =
+          AggregatedTasks(taskList: taskList);
+    }
+    activeTasks.sort();
     isDataLoaded = true;
     notifyListeners();
+  }
+
+  int? findTaskIndex(Task task) {
+    var index = activeTasks.indexWhere((Task t) {
+      return t.taskId == task.taskId;
+    });
+    if (index == -1) {
+      return null;
+    }
+    return index;
   }
 
   void addTask(Task task) async {
@@ -80,13 +107,21 @@ class ToDoData extends ChangeNotifier {
     }
   }
 
-  int? findTaskIndex(Task task) {
-    var index = activeTasks.indexWhere((Task t) {
-      return t.taskId == task.taskId;
-    });
-    if (index == -1) {
-      return null;
+  void addList(String listName) async {
+    TaskList taskList = TaskList(
+      isActive: true,
+      listId: -1,
+      listName: listName,
+    );
+    var taskListAsMap = taskList.toMap();
+    taskListAsMap.remove("listId");
+    int? id = await SqliteDB.insertList(taskListAsMap);
+    if (id == null) {
+      print("could not insert list into database");
+    } else {
+      taskList.listId = id;
+      activeLists.add(taskList);
+      notifyListeners();
     }
-    return index;
   }
 }
