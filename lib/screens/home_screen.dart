@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:todo/task.dart';
 import 'routing.dart' as routing;
-import 'package:todo/shared_data.dart';
+import 'package:todo/states/shared_data.dart';
 import 'package:todo/database/sqlite.dart';
 
 class MyHomePage extends StatefulWidget {
