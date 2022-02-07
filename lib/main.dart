@@ -6,10 +6,12 @@ import 'screens/routing.dart' as routing;
 import 'screens/home_screen.dart';
 import 'package:todo/task.dart';
 import 'package:todo/states/shared_data.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SqliteDB.initDb();
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
