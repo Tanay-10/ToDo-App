@@ -33,6 +33,7 @@ dependencies:
   shared_preferences:
   intl:
   provider:
+  firebase_core:
 #  sqflite:
 
   # The following adds the Cupertino Icons font to your application.
