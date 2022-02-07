@@ -1,17 +1,23 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:todo/task.dart';
+
 import '../database/sqlite.dart';
 
 class AggregatedTasks {
-  TaskList taskList;
+  // TaskList taskList;
   List<Task> overdue = [],
       today = [],
       thisWeek = [],
       thisMonth = [],
-      noDeadLine = [];
-  AggregatedTasks({required this.taskList});
+      later = [];
+  // AggregatedTasks({required this.taskList});
+}
+
+enum Section {
+  overdue,
+  thisMonth,
+  later,
 }
 
 class ToDoData extends ChangeNotifier {
@@ -24,16 +30,76 @@ class ToDoData extends ChangeNotifier {
 
   List<TaskList> activeLists = [];
 
-  Map<int, AggregatedTasks> aggregatedTasksArray = {};
+  Map<int, AggregatedTasks> aggregatedTasksMap = {};
+
+  DateTime now = DateTime.now();
+  DateTime today = DateTime.now();
+  DateTime nextMonth = DateTime.now();
 
   void init() async {
+    now = DateTime.now();
+    today = DateTime(now.year, now.month, now.day);
+    nextMonth = DateTime(now.year, now.month, now.day + 30);
+
     activeTasks = await SqliteDB.getAllPendingTasks();
     activeLists = await SqliteDB.getAllActiveLists();
     for (var taskList in activeLists) {
-      aggregatedTasksArray[taskList.listId] =
-          AggregatedTasks(taskList: taskList);
+      // aggregatedTasksMap[taskList.listId] = AggregatedTasks(taskList: taskList);
+      aggregatedTasksMap[taskList.listId] = AggregatedTasks();
     }
-    activeTasks.sort();
+    activeTasks.sort((Task a, Task b) {
+      if (a.deadlineDate == null) return 1;
+
+      if (b.deadlineDate == null) return -1;
+
+      if (a.deadlineDate!.isAfter(b.deadlineDate!)) return 1;
+
+      if (b.deadlineDate!.isAfter(a.deadlineDate!)) return -1;
+
+      /// both a and b are on same dates
+      if (a.deadlineTime == null) return 1;
+
+      if (b.deadlineTime == null) return -1;
+
+      if (intFromTimeOfDay(a.deadlineTime!) >
+          intFromTimeOfDay(b.deadlineTime!)) {
+        return 1;
+      }
+      if (intFromTimeOfDay(a.deadlineTime!) <
+          intFromTimeOfDay(b.deadlineTime!)) {
+        return -1;
+      }
+      return 0;
+    });
+
+    for (var task in activeTasks) {
+      AggregatedTasks correctAggregatedTasks = aggregatedTasksMap[task.listId]!;
+      if (task.deadlineDate == null) {
+        correctAggregatedTasks.later.add(task);
+      } else if (task.deadlineDate!.isAfter(nextMonth)) {
+        correctAggregatedTasks.later.add(task);
+      } else {
+        DateTime exactDeadline = task.deadlineDate!;
+        if (task.deadlineTime == null) {
+          exactDeadline = DateTime(
+              exactDeadline.year, exactDeadline.month, exactDeadline.day + 1);
+        } else {
+          exactDeadline = DateTime(
+            exactDeadline.year,
+            exactDeadline.month,
+            exactDeadline.day + 1,
+            task.deadlineTime!.hour,
+            task.deadlineTime!.minute,
+          );
+          if (now.isAfter(exactDeadline)) {
+            correctAggregatedTasks.overdue.add(task);
+          } else {
+            correctAggregatedTasks.thisMonth.add(task);
+          }
+        }
+      }
+    }
+
     isDataLoaded = true;
     notifyListeners();
   }
@@ -122,6 +188,28 @@ class ToDoData extends ChangeNotifier {
       taskList.listId = id;
       activeLists.add(taskList);
       notifyListeners();
+    }
+  }
+
+  List<Task> fetchSection({
+    required int selectedListId,
+    required Section section,
+  }) {
+    AggregatedTasks correctAggregatedTasks =
+        aggregatedTasksMap[selectedListId]!;
+    if (section == Section.overdue) {
+      return correctAggregatedTasks.overdue;
+    }
+    if (section == Section.thisMonth) {
+      return correctAggregatedTasks.thisMonth;
+    }
+    if (section == Section.later) {
+      return correctAggregatedTasks.later;
+    }
+    // TODO:: throw error if you reach the following line
+    else {
+      print("Invalid state");
+      return [];
     }
   }
 }
