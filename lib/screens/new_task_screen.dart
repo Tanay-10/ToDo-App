@@ -31,7 +31,7 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
   TextEditingController nameController = TextEditingController();
 
   @override
-  didChangeDependencies() {
+  void didChangeDependencies() {
     super.didChangeDependencies();
     task = widget.task ?? task;
     nameController.text == task.taskName;
@@ -121,14 +121,14 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
       ),
       appBar: AppBar(
         title: Text(widget.task == null ? "New Task" : "Edit Task"),
-        actions: (widget.task == null)
-            ? []
-            : [
+        actions: (widget.task != null)
+            ? [
                 IconButton(
                   onPressed: deleteTask,
                   icon: Icon(Icons.delete_rounded),
                 )
-              ],
+              ]
+            : [],
       ),
       body: Container(
         padding: EdgeInsets.all(10),
@@ -150,7 +150,7 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
                 Flexible(
                   child: TextField(
                     // autofocus: false,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       contentPadding: EdgeInsets.fromLTRB(0, 10, 0, 5),
                       isDense: true,
                       hintText: "Enter Task Here",
