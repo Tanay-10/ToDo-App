@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
@@ -14,9 +15,35 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  int selectedListId = defaultListId;
+
+  List<Widget> createSection(Section section, ToDoData todoData) {
+    List<Task> tasks =
+        todoData.fetchSection(selectedListId: selectedListId, section: section);
+    if (tasks.isEmpty) return [];
+    List<Widget> sectionWidgets = [];
+    sectionWidgets.add(Text(describeEnum(section)));
+    sectionWidgets.add(SizedBox(
+      height: 8,
+    ));
+    for (var task in tasks) {
+      sectionWidgets.add(ActivityCard(
+        task: task,
+        header: task.taskName,
+        date: task.deadlineDate == null ? "" : task.deadlineDate.toString(),
+        list: task.listId.toString(),
+        onTap: () {
+          Navigator.pushNamed(context, routing.newTaskScreenId,
+              arguments: task);
+        },
+      ));
+    }
+    return sectionWidgets;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Consumer<ToDoData>(builder: (context, sd, x) {
+    return Consumer<ToDoData>(builder: (context, todoData, x) {
       return Scaffold(
         floatingActionButton: FloatingActionButton(
             backgroundColor: CupertinoColors.systemBlue,
@@ -35,14 +62,34 @@ class _MyHomePageState extends State<MyHomePage> {
             }),
         appBar: AppBar(
           // backgroundColor: Colors.blue,
-          title: Text("ToDo"),
+          title: DropdownButton<int>(
+            isExpanded: true,
+            items: () {
+              var activeLists = todoData.activeLists;
+              List<DropdownMenuItem<int>> menuItems = [];
+              for (var taskList in activeLists) {
+                menuItems.add(
+                  DropdownMenuItem<int>(
+                    child: Text(taskList.listName),
+                    value: taskList.listId,
+                  ),
+                );
+              }
+              return menuItems;
+            }(),
+            value: selectedListId,
+            onChanged: (value) {
+              selectedListId = value ?? selectedListId;
+              setState(() {});
+            },
+          ),
         ),
         body: () {
           {
-            if (sd.isDataLoaded) {
-              var data = sd.activeTasks;
+            if (todoData.isDataLoaded) {
+              // var data = todoData.activeTasks;
               List<Widget> children = [];
-              for (var task in data) {
+              /*for (var task in data) {
                 children.add(
                   ActivityCard(
                       task: task,
@@ -56,9 +103,12 @@ class _MyHomePageState extends State<MyHomePage> {
                             arguments: task);
                       }),
                 );
+              }*/
+              for (var section in Section.values) {
+                List<Widget> sectionWidget = createSection(section, todoData);
+                children = [...children, ...sectionWidget];
               }
               return ListView(
-                // scrollDirection: Axis.vertical,
                 children: children,
                 padding: const EdgeInsets.all(5),
               );
@@ -107,7 +157,7 @@ class ActivityCard extends StatelessWidget {
                 width: 20,
                 height: 25,
                 child: Checkbox(
-                  onChanged: (value) async {
+                  onChanged: (value) {
                     Provider.of<ToDoData>(context, listen: false)
                         .finishTask(task);
                   },
