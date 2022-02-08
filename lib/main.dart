@@ -4,6 +4,7 @@ import 'database/sqlite.dart';
 import 'screens/new_task_screen.dart';
 import 'screens/routing.dart' as routing;
 import 'screens/home_screen.dart';
+import 'screens/social_sign_in_screen.dart';
 import 'package:todo/task.dart';
 import 'package:todo/states/shared_data.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -28,7 +29,8 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),
-        home: const MyHomePage(),
+        // home: const MyHomePage(),
+        initialRoute: routing.socialSignId,
         // routes: {
         //   routing.newTaskScreenId: (context) => NewTaskScreen(),
         //   routing.homeScreenId: (context) => const MyHomePage(),
@@ -47,6 +49,10 @@ class MyApp extends StatelessWidget {
           }
           if (pageName == routing.homeScreenId) {
             return MaterialPageRoute(builder: (context) => const MyHomePage());
+          }
+          if (pageName == routing.socialSignId) {
+            return MaterialPageRoute(
+                builder: (context) => const SocialSignIn());
           }
         },
       ),
