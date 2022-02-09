@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:todo/task.dart';
-
-import '../database/sqlite.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../datastore/sqlite.dart';
 
 class AggregatedTasks {
   // TaskList taskList;
@@ -35,8 +35,10 @@ class ToDoData extends ChangeNotifier {
   DateTime now = DateTime.now();
   DateTime today = DateTime.now();
   DateTime nextMonth = DateTime.now();
-
+  String userId = "";
   void init() async {
+    userId = FirebaseAuth.instance.currentUser!.uid;
+
     now = DateTime.now();
     today = DateTime(now.year, now.month, now.day);
     nextMonth = DateTime(now.year, now.month, now.day + 30);
@@ -183,7 +185,7 @@ class ToDoData extends ChangeNotifier {
     taskListAsMap.remove("listId");
     int? id = await SqliteDB.insertList(taskListAsMap);
     if (id == null) {
-      print("could not insert list into database");
+      print("could not insert list into datastore");
     } else {
       taskList.listId = id;
       activeLists.add(taskList);
