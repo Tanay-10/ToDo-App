@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'routing.dart' as routing;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:todo/states/shared_data.dart';
+import 'package:provider/provider.dart';
 
 class SocialSignIn extends StatefulWidget {
   const SocialSignIn({Key? key}) : super(key: key);
@@ -23,48 +25,33 @@ class _SocialSignInState extends State<SocialSignIn> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 TextButton(
+                  child: Text(
+                    "Google Sign In",
+                  ),
                   onPressed: () async {
-                    var x = auth.currentUser;
-
-                    if (x != null) {
-                      await x.reload();
-                      print(x.email);
-                      print(x.uid);
-                    } else {
-                      print("user not signed in");
-                    }
-                  },
-                  child: Text("Current user state"),
-                ),
-                TextButton(
-                  child: Text("Email verification"),
-                  onPressed: () async {
-                    await FirebaseAuth.instance.signOut();
-                  },
-                ),
-                TextButton(
-                  child: Text("Social Sign Up"),
-                  onPressed: () async {
-                    // final GoogleSignInAccount? googleUser =
-                    //     await GoogleSignIn().signIn();
                     try {
-                      UserCredential userCredential = await FirebaseAuth
-                          .instance
-                          .createUserWithEmailAndPassword(
-                        email: "tanay4915@gmail.com",
-                        password: "abcd@1234",
+                      final GoogleSignInAccount? googleUser =
+                          await GoogleSignIn().signIn();
+                      final GoogleSignInAuthentication? googleAuth =
+                          await googleUser?.authentication;
+
+                      /// Create a new credential
+                      final credential = GoogleAuthProvider.credential(
+                        accessToken: googleAuth!.accessToken,
+                        idToken: googleAuth.idToken,
                       );
-                    } on FirebaseAuthException catch (e) {
-                      if (e.code == "weak-password") {
-                        print("the password provided is too weak");
-                      } else if (e.code == "email-already-in-use") {
-                        print("email already in use");
-                      } else {
-                        print(e.code);
-                      }
+
+                      /// Once signed in, return the UserCredential
+                      await FirebaseAuth.instance
+                          .signInWithCredential(credential);
+                      Provider.of<ToDoData>(context, listen: false).init();
+                      Navigator.pushNamedAndRemoveUntil(
+                          context, routing.homeScreenId, (route) => false);
+                    } catch (e) {
+                      print(e);
                     }
                   },
-                ),
+                )
               ],
             ),
           );
