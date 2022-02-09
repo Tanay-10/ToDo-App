@@ -23,10 +23,13 @@ class _SocialSignInState extends State<SocialSignIn> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 TextButton(
-                  onPressed: () {
+                  onPressed: () async {
                     var x = auth.currentUser;
+
                     if (x != null) {
+                      await x.reload();
                       print(x.email);
+                      print(x.uid);
                     } else {
                       print("user not signed in");
                     }
@@ -34,7 +37,7 @@ class _SocialSignInState extends State<SocialSignIn> {
                   child: Text("Current user state"),
                 ),
                 TextButton(
-                  child: Text("Log out"),
+                  child: Text("Email verification"),
                   onPressed: () async {
                     await FirebaseAuth.instance.signOut();
                   },
