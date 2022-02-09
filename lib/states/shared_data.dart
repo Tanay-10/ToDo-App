@@ -24,9 +24,9 @@ class ToDoData extends ChangeNotifier {
   bool isDataLoaded = false;
   List<Task> activeTasks = [];
 
-  ToDoData() {
+  /* ToDoData() {
     init();
-  }
+  }*/
 
   List<TaskList> activeLists = [];
 
@@ -36,6 +36,7 @@ class ToDoData extends ChangeNotifier {
   DateTime today = DateTime.now();
   DateTime nextMonth = DateTime.now();
   String userId = "";
+
   void init() async {
     userId = FirebaseAuth.instance.currentUser!.uid;
 
