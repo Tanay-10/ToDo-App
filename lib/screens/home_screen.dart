@@ -5,7 +5,8 @@ import 'package:provider/provider.dart';
 import 'package:todo/task.dart';
 import 'routing.dart' as routing;
 import 'package:todo/states/shared_data.dart';
-import 'package:todo/database/sqlite.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key}) : super(key: key);
@@ -83,6 +84,17 @@ class _MyHomePageState extends State<MyHomePage> {
               setState(() {});
             },
           ),
+          actions: [
+            IconButton(
+              icon: Icon(Icons.exit_to_app_sharp),
+              onPressed: () async {
+                await GoogleSignIn().signOut();
+                await FirebaseAuth.instance.signOut();
+                Navigator.pushNamedAndRemoveUntil(
+                    context, routing.socialSignInId, (route) => false);
+              },
+            )
+          ],
         ),
         body: () {
           {
