@@ -1,3 +1,4 @@
 const String newTaskScreenId = "NewTaskScreen";
 const String homeScreenId = "HomeScreen";
-const String socialSignId = "SocialSignInScreen";
+const String socialSignInId = "SocialSignInScreen";
+const String splashScreenId = "SplashScreen";
