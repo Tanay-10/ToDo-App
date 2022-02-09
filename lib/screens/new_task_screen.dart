@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:todo/task.dart';
 import 'routing.dart' as routing;
-import '../database/sqlite.dart';
+import '../datastore/sqlite.dart';
 import 'package:provider/provider.dart';
 import 'package:todo/states/shared_data.dart';
 
@@ -513,7 +513,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:todo/task.dart';
 import 'routing.dart' as routing;
-import '../database/sqlite.dart';
+import '../datastore/sqlite.dart';
 
 class NewTaskScreen extends StatefulWidget {
   const NewTaskScreen({Key? key, this.task}) : super(key: key);
