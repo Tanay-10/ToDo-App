@@ -16,7 +16,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int selectedListId = defaultListId;
+  String selectedListId = defaultListId;
 
   List<Widget> createSection(Section section, ToDoData todoData) {
     List<Task> tasks =
@@ -63,14 +63,14 @@ class _MyHomePageState extends State<MyHomePage> {
             }),
         appBar: AppBar(
           // backgroundColor: Colors.blue,
-          title: DropdownButton<int>(
+          title: DropdownButton<String>(
             isExpanded: true,
             items: () {
               var activeLists = todoData.activeLists;
-              List<DropdownMenuItem<int>> menuItems = [];
+              List<DropdownMenuItem<String>> menuItems = [];
               for (var taskList in activeLists) {
                 menuItems.add(
-                  DropdownMenuItem<int>(
+                  DropdownMenuItem<String>(
                     child: Text(taskList.listName),
                     value: taskList.listId,
                   ),
