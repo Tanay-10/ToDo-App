@@ -20,7 +20,7 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
     isRepeating: false,
     taskName: "",
     listId: defaultListId,
-    taskId: -1,
+    taskId: "dummyTaskId",
     parentTaskId: null,
     deadlineDate: null,
     deadlineTime: null,
@@ -346,14 +346,14 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
                 const SizedBox(width: 10),
                 Consumer<ToDoData>(builder: (context, todoData, child) {
                   return Expanded(
-                    child: DropdownButton<int>(
+                    child: DropdownButton<String>(
                       isExpanded: true,
                       items: () {
                         var activeLists = todoData.activeLists;
-                        List<DropdownMenuItem<int>> menuItems = [];
+                        List<DropdownMenuItem<String>> menuItems = [];
                         for (var taskList in activeLists) {
                           menuItems.add(
-                            DropdownMenuItem<int>(
+                            DropdownMenuItem<String>(
                               child: Text(taskList.listName),
                               value: taskList.listId,
                             ),
